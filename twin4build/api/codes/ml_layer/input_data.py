@@ -147,12 +147,12 @@ class input_data:
                   # Define the path for the config.json file
                   config_json_path = os.path.join(os.path.abspath(
                         uppath(os.path.abspath(__file__), 4)), "config", "config.json")
-
+                  
                   # Read JSON data from the config file
                   with open(config_json_path, 'r') as json_file:
                         json_data = json_file.read()
 
-                  # Parse the JSON data
+                  # read the configuration from config.json
                   input_schedules = json.loads(json_data)
 
                   # start and end time for self
