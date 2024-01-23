@@ -353,7 +353,7 @@ class Simulator():
 
 
             
-            n_samples = 200
+            n_samples = 100
             y_model = np.zeros((len(self.dateTimeSteps), len(self.targetMeasuringDevices)))
             y_noise = np.zeros((n_samples, len(self.dateTimeSteps), len(self.targetMeasuringDevices)))
             y = np.zeros((n_samples, len(self.dateTimeSteps), len(self.targetMeasuringDevices)))
@@ -366,7 +366,7 @@ class Simulator():
                 scale_lengths = theta_kernel[n_prev:n_prev+n]
                 a = scale_lengths[0]
                 scale_lengths = scale_lengths[1:]
-                kernel = kernels.Matern32Kernel(metric=scale_lengths, ndim=scale_lengths.size)
+                kernel = kernels.Matern52Kernel(metric=scale_lengths, ndim=scale_lengths.size)
                 # kernel = kernels.ExpSquaredKernel(metric=scale_lengths, ndim=scale_lengths.size)
                 gp = george.GP(a*kernel)
                 gp.compute(x_train[measuring_device.id], self.targetMeasuringDevices[measuring_device]["standardDeviation"])
@@ -444,7 +444,7 @@ class Simulator():
             # y_w_obs_error = y# + np.random.normal(0, standardDeviation, size=y.shape)
             for col in range(len(targetMeasuringDevices)):
                 if assume_uncorrelated_noise==False:
-                    predictions_noise[col].append(y[2][:,col])
+                    predictions_noise[col].append(y[2][:,:,col])
                     predictions[col].append(y[0][:,:,col])
                 else:
                     predictions[col].append(y[0][:,col])
@@ -454,9 +454,15 @@ class Simulator():
                 
         intervals = []
         for col in range(len(targetMeasuringDevices)):
-            intervals.append({"noise": np.array(predictions_noise[col]),
-                            "model": np.array(predictions_model[col]),
-                            "prediction": np.array(predictions[col])})
+            pn = np.array(predictions_noise[col])
+            om = np.array(predictions_model[col])
+            p = np.array(predictions[col])
+            pn = pn.reshape((pn.shape[0]*pn.shape[1], pn.shape[2])) if assume_uncorrelated_noise==False else pn
+            p = p.reshape((p.shape[0]*p.shape[1], p.shape[2])) if assume_uncorrelated_noise==False else p
+
+            intervals.append({"noise": pn,
+                            "model": om,
+                            "prediction": p})
         ydata = []
         for measuring_device, value in targetMeasuringDevices.items():
             ydata.append(df_actual_readings_test[measuring_device.id].to_numpy())
